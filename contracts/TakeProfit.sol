@@ -22,17 +22,22 @@ pragma solidity 0.8.0;
 import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import {IOperationalTreasury, IHegicStrategy} from "./IOperationalTreasury.sol";
 import {ITakeProfit} from "./ITakeProfit.sol";
-import {IPositionManager} from "./IPositionManager.sol";
+import {IPositionsManager} from "./IPositionsManager.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+
+import "hardhat/console.sol";
 
 /**
  * @title TakeProfit
  * @author 0nika0
  * @dev A contract that enables users to set and execute take-profit orders on ERC721 tokens.
  */
-contract TakeProfit is ITakeProfit {
+contract TakeProfit is ITakeProfit, Ownable {
 
-    IPositionManager public positionManager;
+    IPositionsManager public positionManager;
     IOperationalTreasury public operationalTreasury;
+
+    uint256 public globalTimeToExecution = 30 minutes;
 
     mapping(uint256 => TakeInfo) public tokenIdToTakeInfo;
 
@@ -40,8 +45,17 @@ contract TakeProfit is ITakeProfit {
         address _positionManager, 
         address _operationalTreasury
     ) {
-        positionManager = IPositionManager(_positionManager);
+        positionManager = IPositionsManager(_positionManager);
         operationalTreasury = IOperationalTreasury(_operationalTreasury);
+    }
+
+    // OWNER FUNCTIONS //
+
+    /**
+     * @dev See {ITakeProfit-setGlobalTimeToExecution}.
+     */
+    function setGlobalTimeToExecution(uint256 newGlobalTimeToExecution) external override onlyOwner {
+        globalTimeToExecution = newGlobalTimeToExecution;
     }
 
     // VIEW FUNCTIONS // 
@@ -78,22 +92,21 @@ contract TakeProfit is ITakeProfit {
     function checkTakeProfit(uint256 tokenId) public view override returns (bool takeProfitTriggered) {
         TakeInfo memory takenInfo = tokenIdToTakeInfo[tokenId];
 
-        if (takenInfo.expirationTime == 0 || block.timestamp < takenInfo.expirationTime) {
+        if (positionManager.isApprovedOrOwner(address(this), tokenId) == false || (getPayOffAmount(tokenId) > 0) == false) {
             return false;
         }
 
-        uint256 timeToExpiration = takenInfo.expirationTime - block.timestamp;
-
-        if (timeToExpiration < takenInfo.timeToExecution && getPayOffAmount(tokenId) > 0) {
+        if (block.timestamp > getExpirationTime(tokenId) - globalTimeToExecution) {
             return true;
         }
 
-        uint256 currentPrice = getCurrentPrice(takenInfo.tokenId);
+        uint256 currentPrice = getCurrentPrice(tokenId);
 
-        if (takenInfo.isTpPriceGte) {
-            takeProfitTriggered = currentPrice >= takenInfo.tpPriceGte;
-        } else if (takenInfo.isTpPriceLte) {
-            takeProfitTriggered = currentPrice <= takenInfo.tpPriceLte;
+        if (takenInfo.upperStopPrice != 0) {
+            takeProfitTriggered = currentPrice >= takenInfo.upperStopPrice;
+        }  
+        if (takenInfo.lowerStopPrice != 0) {
+            takeProfitTriggered = currentPrice <= takenInfo.lowerStopPrice;
         }
     }
 
@@ -102,41 +115,23 @@ contract TakeProfit is ITakeProfit {
     /**
      * @dev See {ITakeProfit-setTakeProfit}.
      */
-    function setTakeProfit(
-        uint256 tokenId,
-        uint256 tpPriceGte,
-        uint256 tpPriceLte,
-        uint256 timeToExecution,
-        bool isTpPriceGte,
-        bool isTpPriceLte,
-        address owner
-    ) external override {
+    function setTakeProfit(uint256 tokenId, TakeInfo calldata takeProfitParams) external override {
         require(positionManager.ownerOf(tokenId) == msg.sender, "Caller must be the owner of the token");
 
         require(positionManager.isApprovedOrOwner(address(this), tokenId), "This tokenId is not approved for this address");
 
-        uint256 expirationTime = getExpirationTime(tokenId);
-
-        require(block.timestamp < expirationTime, "Option expiration date has passed");
+        require(block.timestamp < getExpirationTime(tokenId), "Option expiration date has passed");
 
         tokenIdToTakeInfo[tokenId] = TakeInfo(
-            tokenId,
-            tpPriceGte,
-            tpPriceLte,
-            expirationTime,
-            timeToExecution,
-            owner,
-            isTpPriceGte,
-            isTpPriceLte
+            takeProfitParams.upperStopPrice,
+            takeProfitParams.lowerStopPrice
         );
 
         emit TakeProfitSet(
             tokenId, 
-            tpPriceGte, 
-            tpPriceLte,
-            timeToExecution,
-            isTpPriceGte,
-            isTpPriceLte
+            msg.sender,
+            takeProfitParams.upperStopPrice,
+            takeProfitParams.lowerStopPrice
         );
     }
 
@@ -148,11 +143,9 @@ contract TakeProfit is ITakeProfit {
         
         require(positionManager.ownerOf(tokenId) == msg.sender, "Caller must be the owner of the token");
 
-        require(takenInfo.expirationTime > 0, "No token set for take profit");
+        require(takenInfo.upperStopPrice != 0 && takenInfo.lowerStopPrice != 0, "No token set for take profit");
 
         delete tokenIdToTakeInfo[tokenId];
-
-        positionManager.transferFrom(address(this), msg.sender, tokenId);
 
         emit TakeProfitDeleted(tokenId);
     }
@@ -161,34 +154,24 @@ contract TakeProfit is ITakeProfit {
      * @dev See {ITakeProfit-updateTakeProfit}.
      */
     function updateTakeProfit(
-        uint256 tokenId,
-        uint256 newTpPriceGte,
-        uint256 newTpPriceLte,
-        uint256 newTimeToExecution,
-        bool newIsTpPriceGte,
-        bool newIsTpPriceLte
+        uint256 tokenId, 
+        TakeInfo calldata takeProfitParams
     ) external override {
         TakeInfo storage takenInfo = tokenIdToTakeInfo[tokenId];
 
         require(positionManager.ownerOf(tokenId) == msg.sender, "Caller must be the owner of the token");
 
-        require(takenInfo.expirationTime > 0, "No token set for take profit");
+        require(takenInfo.upperStopPrice != 0 || takenInfo.lowerStopPrice != 0, "No token set for take profit");
 
-        require(block.timestamp < takenInfo.expirationTime, "Option expiration date has passed");
+        require(block.timestamp < getExpirationTime(tokenId), "Option expiration date has passed");
 
-        takenInfo.tpPriceGte = newTpPriceGte;
-        takenInfo.tpPriceLte = newTpPriceLte;
-        takenInfo.timeToExecution = newTimeToExecution;
-        takenInfo.isTpPriceGte = newIsTpPriceGte;
-        takenInfo.isTpPriceLte = newIsTpPriceLte;
+        takenInfo.upperStopPrice = takeProfitParams.upperStopPrice;
+        takenInfo.lowerStopPrice = takeProfitParams.lowerStopPrice;
 
         emit TakeProfitUpdated(
             tokenId, 
-            newTpPriceGte, 
-            newTpPriceLte,
-            newTimeToExecution,
-            newIsTpPriceGte,
-            newIsTpPriceLte
+            takeProfitParams.upperStopPrice,
+            takeProfitParams.lowerStopPrice
         );
     }
 
@@ -196,16 +179,16 @@ contract TakeProfit is ITakeProfit {
      * @dev See {ITakeProfit-executeTakeProfit}.
      */
     function executeTakeProfit(uint256 tokenId) external override {
-        TakeInfo memory takenInfo = tokenIdToTakeInfo[tokenId];
-
         require(checkTakeProfit(tokenId), "Take profit conditions not met");
 
         delete tokenIdToTakeInfo[tokenId];
 
-        positionManager.transferFrom(msg.sender, address(this), tokenId);
+        address tokenOwner = positionManager.ownerOf(tokenId); 
 
-        if (block.timestamp < takenInfo.expirationTime) {
-            payOff(takenInfo);
+        positionManager.transferFrom(tokenOwner, address(this), tokenId);
+
+        if (block.timestamp < getExpirationTime(tokenId)) {
+            payOff(tokenId, tokenOwner);
         }
 
         emit TakeProfitExecuted(tokenId);
@@ -220,11 +203,10 @@ contract TakeProfit is ITakeProfit {
      * conditions have been met and the token has not yet expired. It interacts with the operational treasury
      * to calculate and transfer the profit.
      * 
-     * @param takenInfo The TakeInfo structure containing information about the token and its take profit configuration.
      */
-    function payOff(TakeInfo memory takenInfo) private {
-        operationalTreasury.payOff(takenInfo.tokenId, takenInfo.owner);
+    function payOff(uint256 tokenId, address tokenOwner) private {
+        operationalTreasury.payOff(tokenId, tokenOwner);
 
-        positionManager.transferFrom(address(this), takenInfo.owner, takenInfo.tokenId);
+        positionManager.transferFrom(address(this), tokenOwner, tokenId);
     }
 }

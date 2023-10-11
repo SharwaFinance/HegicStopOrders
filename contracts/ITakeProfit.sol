@@ -23,22 +23,23 @@ interface ITakeProfit {
     // STRUCTS //
 
     /**
-     * @dev A structure representing the take profit configuration for a tokenized option.
-     * 
-     * This structure contains information about the take profit settings for a specific tokenized option.
-     * It includes the token's unique identifier, take profit price conditions (greater than or equal to and less than or equal to),
-     * expiration time, time duration before execution, owner's address, and boolean flags indicating the take profit conditions.
+     * @dev Struct representing take profit information for a financial instrument.
+     * @notice A `TakeInfo` with zero values indicates an inactive state.
      */
     struct TakeInfo {
-        uint256 tokenId;            // The unique identifier of the token.
-        uint256 tpPriceGte;         // The take profit price condition (greater than or equal to).
-        uint256 tpPriceLte;         // The take profit price condition (less than or equal to).
-        uint256 expirationTime;     // The expiration time of the tokenized option.
-        uint256 timeToExecution;    // The time duration before the take profit is executed.
-        address owner;              // The owner's address of the token.
-        bool isTpPriceGte;          // Boolean indicating if the take profit condition is "greater than or equal to."
-        bool isTpPriceLte;          // Boolean indicating if the take profit condition is "less than or equal to."
+        uint256 upperStopPrice; // The upper price threshold at which the take profit order triggers.         
+        uint256 lowerStopPrice; // The lower price threshold at which the take profit order triggers.       
     }
+
+    // OWNER FUNCTIONS //
+
+    /**
+     * @dev Updates the global time to execution for all take profit orders.
+     * @param newGlobalTimeToExecution The new global time duration, in seconds, before take profit orders are executed.
+     * Requirements:
+     * - Only the contract owner can set the new global time to execution.
+     */
+    function setGlobalTimeToExecution(uint256 newGlobalTimeToExecution) external;
 
     // VIEW FUNCTIONS //
 
@@ -75,44 +76,28 @@ interface ITakeProfit {
     /**
      * @dev Checks if the take profit conditions for a specific token have been triggered.
      * 
-     * This function allows for the evaluation of whether the take profit conditions have been met
-     * for a particular token, considering factors such as expiration time, time to execution, and price conditions.
-     * 
      * @param tokenId The unique identifier of the token for which take profit is being checked.
      * 
      * @return takeProfitTriggered Boolean indicating whether the take profit conditions have been triggered or not.
-     */
+    */
     function checkTakeProfit(uint256 tokenId) external view returns (bool takeProfitTriggered);
 
     // EXTERNAL FUNCTIONS //
 
     /**
-     * @dev Sets a take profit configuration for a specific token.
+     * @dev Sets the take profit conditions for a specific token.
      * 
-     * This function allows the specified owner to set a take profit configuration for a particular token,
-     * including price conditions, execution time, and conditions for greater than or less than comparisons.
-     * 
-     * @param tokenId The unique identifier of the token for which the take profit is being set.
-     * @param tpPriceGte The take profit price (greater than or equal to condition).
-     * @param tpPriceLte The take profit price (less than or equal to condition).
-     * @param timeToExecution The time duration before the take profit is executed.
-     * @param isTpPriceGte Boolean indicating if the take profit condition is "greater than or equal to."
-     * @param isTpPriceLte Boolean indicating if the take profit condition is "less than or equal to."
-     * @param owner The address of the owner of the token.
+     * @param tokenId The unique identifier of the token for which take profit is being set.
+     * @param takeProfitParams A `TakeInfo` struct containing the upper and lower stop prices.
      * 
      * Requirements:
-     * - The caller must be the owner of the specified token.
+     * - The caller must be the owner of the token.
      * - The contract must be approved to manage the specified token.
-     * - The option expiration date must not have passed.
+     * - The token's expiration date must not have passed.
      */
     function setTakeProfit(
-        uint256 tokenId,
-        uint256 tpPriceGte,
-        uint256 tpPriceLte,
-        uint256 timeToExecution,
-        bool isTpPriceGte,
-        bool isTpPriceLte,
-        address owner
+        uint256 tokenId, 
+        TakeInfo calldata takeProfitParams
     ) external;
 
     /**
@@ -123,36 +108,25 @@ interface ITakeProfit {
      * @param tokenId The unique identifier of the token for which the take profit is being deleted.
      * 
      * Requirements:
-     * - The caller must be the owner of the specified token.
+     * - The caller must be the owner of the token.
      * - A valid take profit configuration must exist for the token.
      */
     function deleteTakeProfit(uint256 tokenId) external;
 
     /**
-     * @dev Updates the take profit configuration for a specific token.
+     * @dev Updates the take profit conditions for a specific token.
      * 
-     * This function allows the owner of a specified token to update the existing take profit parameters,
-     * including price conditions, execution time, and conditions for greater than or less than comparisons.
-     * 
-     * @param tokenId The unique identifier of the token for which the take profit is being updated.
-     * @param newTpPriceGte The new take profit price (greater than or equal to condition).
-     * @param newTpPriceLte The new take profit price (less than or equal to condition).
-     * @param newTimeToExecution The new time duration before the take profit is executed.
-     * @param newIsTpPriceGte Boolean indicating the new take profit condition "greater than or equal to."
-     * @param newIsTpPriceLte Boolean indicating the new take profit condition "less than or equal to."
-     * 
+     * @param tokenId The unique identifier of the token for which take profit is being updated.
+     * @param takeProfitParams The new take profit conditions to set.
+     *
      * Requirements:
-     * - The caller must be the owner of the specified token.
+     * - The caller must be the owner of the token.
      * - A valid take profit configuration must exist for the token.
      * - The option expiration date must not have passed.
      */
     function updateTakeProfit(
-        uint256 tokenId,
-        uint256 newTpPriceGte,
-        uint256 newTpPriceLte,
-        uint256 newTimeToExecution,
-        bool newIsTpPriceGte,
-        bool newIsTpPriceLte
+        uint256 tokenId, 
+        TakeInfo calldata takeProfitParams
     ) external;
 
     /**
@@ -175,46 +149,36 @@ interface ITakeProfit {
      * @dev An event emitted when a take profit configuration is set for a tokenized option.
      * 
      * This event is triggered when a user successfully sets a take profit configuration for a specific tokenized option.
-     * It includes details such as the token's unique identifier, take profit price conditions (greater than or equal to and less than or equal to),
-     * time duration before execution, and boolean flags indicating the take profit conditions.
+     * It includes details such as the token's unique identifier, upper and lower stop price conditions, 
+     * which define the range for triggering the take profit, and indicate when the take profit conditions are met.
      * 
      * @param tokenId The unique identifier of the token for which the take profit is being set.
-     * @param tpPriceGte The take profit price condition (greater than or equal to).
-     * @param tpPriceLte The take profit price condition (less than or equal to).
-     * @param timeToExecution The time duration before the take profit is executed.
-     * @param isTpPriceGte Boolean indicating if the take profit condition is "greater than or equal to."
-     * @param isTpPriceLte Boolean indicating if the take profit condition is "less than or equal to."
+     * @param user The address of the user setting the take profit configuration.
+     * @param upperStopPrice The upper stop price condition for take profit (greater than or equal to).
+     * @param lowerStopPrice The lower stop price condition for take profit (less than or equal to).
      */
     event TakeProfitSet(
         uint256 indexed tokenId, 
-        uint256 tpPriceGte,
-        uint256 tpPriceLte,
-        uint256 timeToExecution,
-        bool isTpPriceGte,
-        bool isTpPriceLte
+        address indexed user,
+        uint256 upperStopPrice,
+        uint256 lowerStopPrice
     );
 
     /**
      * @dev An event emitted when a take profit configuration is updated for a tokenized option.
      * 
      * This event is triggered when a user successfully updates the take profit configuration for a specific tokenized option.
-     * It includes details such as the token's unique identifier, updated take profit price conditions (greater than or equal to and less than or equal to),
-     * updated time duration before execution, and boolean flags indicating the updated take profit conditions.
+     * It includes details such as the token's unique identifier, updated upper and lower stop price conditions, 
+     * which define the range for triggering the take profit, and indicate the updated take profit conditions.
      * 
      * @param tokenId The unique identifier of the token for which the take profit is being updated.
-     * @param tpPriceGte The updated take profit price condition (greater than or equal to).
-     * @param tpPriceLte The updated take profit price condition (less than or equal to).
-     * @param timeToExecution The updated time duration before the take profit is executed.
-     * @param isTpPriceGte Boolean indicating if the updated take profit condition is "greater than or equal to."
-     * @param isTpPriceLte Boolean indicating if the updated take profit condition is "less than or equal to."
+     * @param upperStopPrice The updated upper stop price condition for take profit (greater than or equal to).
+     * @param lowerStopPrice The updated lower stop price condition for take profit (less than or equal to).
      */
     event TakeProfitUpdated(
         uint256 indexed tokenId, 
-        uint256 tpPriceGte,
-        uint256 tpPriceLte,
-        uint256 timeToExecution,
-        bool isTpPriceGte,
-        bool isTpPriceLte
+        uint256 upperStopPrice,
+        uint256 lowerStopPrice
     );
     
     /**
