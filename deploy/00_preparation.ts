@@ -37,9 +37,24 @@ async function deployment(hre: HardhatRuntimeEnvironment): Promise<void> {
       contract: "MockOperationalTreasury",
       from: deployer,
       args: [MockHegicStrategy.address]
-    })    
-  } 
-  // else if (network.name == "arb_ddl")
+    }) 
+
+  } else if (network.name == "arbitrum_ddl_test") {
+    save("USDCe", {
+      address: "0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8",
+      abi: await getArtifact("@openzeppelin/contracts/token/ERC20/ERC20.sol:ERC20").then((x) => x.abi),
+    })
+
+    save("PositionsManager", {
+      address: "0x5Fe380D68fEe022d8acd42dc4D36FbfB249a76d5",
+      abi: await getArtifact("contracts/IPositionsManager.sol:IPositionsManager").then((x) => x.abi),
+    })
+
+    save("OperationalTreasury", {
+      address: "0xec096ea6eB9aa5ea689b0CF00882366E92377371",
+      abi: await getArtifact("contracts/IOperationalTreasury.sol:IOperationalTreasury").then((x) => x.abi),
+    })
+  }
 
 }
 

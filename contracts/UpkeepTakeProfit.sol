@@ -5,7 +5,7 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {ITakeProfit} from "./ITakeProfit.sol";
 import {IPositionsManager} from "./IPositionsManager.sol";
 
-contract UpkeeptakeProfit is 
+contract UpkeepTakeProfit is 
     AutomationCompatibleInterface, 
     Ownable
 {
