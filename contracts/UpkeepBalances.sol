@@ -4,7 +4,8 @@ import {AutomationCompatibleInterface} from "@chainlink/contracts/src/v0.8/autom
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {ITakeProfit} from "./ITakeProfit.sol";
 import {IPositionsManager} from "./IPositionsManager.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {ILinkTokenInterface} from "./ILinkTokenInterface.sol";
+import {IClonableBeaconProxy} from "./IClonableBeaconProxy.sol";
 
 contract UpkeepBalances is 
     AutomationCompatibleInterface,
@@ -12,23 +13,33 @@ contract UpkeepBalances is
 {
     uint256 public minBalance = 25e18;
     uint256 public provideAmount = 5e18;
-    IERC20 public token;
-    address[] public addresses;
+    ILinkTokenInterface public link;
+    IClonableBeaconProxy public beacon;
+
+    mapping(uint256 => uint256) public indexToUpkeepIds;
+    uint256 public nextIndex;
 
     constructor(
-        IERC20 _token
+        ILinkTokenInterface _link,
+        IClonableBeaconProxy _beacon
     ) {
-        token = _token;
+        link = _link;
+        beacon = _beacon;
     }
 
     // OWNER FUNCTIONS //
 
-    function setAddress(address value, uint256 index) external onlyOwner {
-        addresses[index] = value;
+    function addUpkeepId(uint256 id) external onlyOwner {
+        indexToUpkeepIds[nextIndex] = id;
+        nextIndex++;
+    }
+
+    function setUpkeepId(uint256 id, uint256 index) external onlyOwner {
+        indexToUpkeepIds[index] = id;
     }
 
     function withdraw(uint256 amount) external onlyOwner {
-        token.transfer(msg.sender, amount);
+        link.transfer(msg.sender, amount);
     }
 
     function setProvideAmount(uint256 newProvideAmount) external onlyOwner {
@@ -37,6 +48,22 @@ contract UpkeepBalances is
 
     function setMinBalance(uint256 newMinBalance) external onlyOwner {
         minBalance = newMinBalance;
+    }
+
+    function setBeacon(IClonableBeaconProxy newBeacon) external onlyOwner {
+        beacon = newBeacon;
+    }
+
+    function allApprove(uint256 amount) external {
+        link.approve(address(beacon), amount);
+    }
+
+
+    // VIEW FUNCTIONS //
+
+    function getUpkeepBalance(uint256 id) public view returns(uint256 balance) {
+        IClonableBeaconProxy.UpkeepInfo memory upkeepData = beacon.getUpkeep(id);
+        balance = uint256(upkeepData.balance);
     }
 
     // EXTERNAL FUNCTIONS // 
@@ -50,23 +77,29 @@ contract UpkeepBalances is
         returns (bool upkeepNeeded, bytes memory performData)
     {
         upkeepNeeded = false;
-        for (uint256 i = 0; i < addresses.length; i++) {
-            if (token.balanceOf(addresses[i]) < minBalance) {
-                upkeepNeeded = true;
-                performData = abi.encode(addresses[i]);
-                break;
+        for (uint256 i = 0; i < nextIndex; i++) {
+            if (indexToUpkeepIds[i] != 0) {
+                if (getUpkeepBalance(indexToUpkeepIds[i]) < minBalance) {
+                    upkeepNeeded = true;
+                    performData = abi.encode(indexToUpkeepIds[i]);
+                    break;
+                }
             }
         }
         return (upkeepNeeded, performData);
     }
 
     function performUpkeep(bytes calldata performData) external override {
-        (address account) = abi.decode(
+        (uint256 id) = abi.decode(
             performData,
-            (address)
+            (uint256)
         );
-        if (token.balanceOf(account) < minBalance) {
-            token.transfer(account, provideAmount);
+        if (getUpkeepBalance(id) < minBalance) {
+            link.transferAndCall(
+                address(beacon),
+                provideAmount,
+                abi.encode(id)
+            );
         }
     }
 }

@@ -114,22 +114,6 @@ interface ITakeProfit {
     function deleteTakeProfit(uint256 tokenId) external;
 
     /**
-     * @dev Updates the take profit conditions for a specific token.
-     * 
-     * @param tokenId The unique identifier of the token for which take profit is being updated.
-     * @param takeProfitParams The new take profit conditions to set.
-     *
-     * Requirements:
-     * - The caller must be the owner of the token.
-     * - A valid take profit configuration must exist for the token.
-     * - The option expiration date must not have passed.
-     */
-    function updateTakeProfit(
-        uint256 tokenId, 
-        TakeInfo calldata takeProfitParams
-    ) external;
-
-    /**
      * @dev Executes the take profit for a specific token.
      * 
      * This function allows a user to execute the take profit conditions for a specified token.
@@ -163,23 +147,6 @@ interface ITakeProfit {
         uint256 upperStopPrice,
         uint256 lowerStopPrice
     );
-
-    /**
-     * @dev An event emitted when a take profit configuration is updated for a tokenized option.
-     * 
-     * This event is triggered when a user successfully updates the take profit configuration for a specific tokenized option.
-     * It includes details such as the token's unique identifier, updated upper and lower stop price conditions, 
-     * which define the range for triggering the take profit, and indicate the updated take profit conditions.
-     * 
-     * @param tokenId The unique identifier of the token for which the take profit is being updated.
-     * @param upperStopPrice The updated upper stop price condition for take profit (greater than or equal to).
-     * @param lowerStopPrice The updated lower stop price condition for take profit (less than or equal to).
-     */
-    event TakeProfitUpdated(
-        uint256 indexed tokenId, 
-        uint256 upperStopPrice,
-        uint256 lowerStopPrice
-    );
     
     /**
      * @dev An event emitted when a take profit configuration is deleted for a tokenized option.
@@ -198,6 +165,10 @@ interface ITakeProfit {
      * It includes the unique identifier of the token for which the take profit is executed.
      * 
      * @param tokenId The unique identifier of the token for which the take profit is executed.
+     * @param user The address of the user setting the take profit configuration.
      */
-    event TakeProfitExecuted(uint256 indexed tokenId);
+    event TakeProfitExecuted(
+        uint256 indexed tokenId,
+        address indexed user
+    );
 }

@@ -45,6 +45,16 @@ async function deployment(hre: HardhatRuntimeEnvironment): Promise<void> {
       abi: await getArtifact("@openzeppelin/contracts/token/ERC20/ERC20.sol:ERC20").then((x) => x.abi),
     })
 
+    save("LINK", {
+      address: "0xf97f4df75117a78c1A5a0DBb814Af92458539FB4",
+      abi: await getArtifact("@openzeppelin/contracts/token/ERC20/ERC20.sol:ERC20").then((x) => x.abi),
+    })
+
+    save("IClonableBeaconProxy", {
+      address: "0x37D9dC70bfcd8BC77Ec2858836B923c560E891D1",
+      abi: await getArtifact("contracts/IClonableBeaconProxy.sol:IClonableBeaconProxy").then((x) => x.abi),
+    })
+
     save("PositionsManager", {
       address: "0x5Fe380D68fEe022d8acd42dc4D36FbfB249a76d5",
       abi: await getArtifact("contracts/IPositionsManager.sol:IPositionsManager").then((x) => x.abi),

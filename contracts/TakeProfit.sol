@@ -103,10 +103,14 @@ contract TakeProfit is ITakeProfit, Ownable {
         uint256 currentPrice = getCurrentPrice(tokenId);
 
         if (takenInfo.upperStopPrice != 0) {
-            takeProfitTriggered = currentPrice >= takenInfo.upperStopPrice;
+            if (currentPrice >= takenInfo.upperStopPrice) {
+                return true;
+            }
         }  
         if (takenInfo.lowerStopPrice != 0) {
-            takeProfitTriggered = currentPrice <= takenInfo.lowerStopPrice;
+            if (currentPrice <= takenInfo.lowerStopPrice) {
+                return true;
+            }
         }
     }
 
@@ -143,36 +147,11 @@ contract TakeProfit is ITakeProfit, Ownable {
         
         require(positionManager.ownerOf(tokenId) == msg.sender, "Caller must be the owner of the token");
 
-        require(takenInfo.upperStopPrice != 0 && takenInfo.lowerStopPrice != 0, "No token set for take profit");
+        require((takenInfo.upperStopPrice == 0 && takenInfo.lowerStopPrice == 0) == false, "No token set for take profit");
 
         delete tokenIdToTakeInfo[tokenId];
 
         emit TakeProfitDeleted(tokenId);
-    }
-
-    /**
-     * @dev See {ITakeProfit-updateTakeProfit}.
-     */
-    function updateTakeProfit(
-        uint256 tokenId, 
-        TakeInfo calldata takeProfitParams
-    ) external override {
-        TakeInfo storage takenInfo = tokenIdToTakeInfo[tokenId];
-
-        require(positionManager.ownerOf(tokenId) == msg.sender, "Caller must be the owner of the token");
-
-        require(takenInfo.upperStopPrice != 0 || takenInfo.lowerStopPrice != 0, "No token set for take profit");
-
-        require(block.timestamp < getExpirationTime(tokenId), "Option expiration date has passed");
-
-        takenInfo.upperStopPrice = takeProfitParams.upperStopPrice;
-        takenInfo.lowerStopPrice = takeProfitParams.lowerStopPrice;
-
-        emit TakeProfitUpdated(
-            tokenId, 
-            takeProfitParams.upperStopPrice,
-            takeProfitParams.lowerStopPrice
-        );
     }
 
     /**
@@ -191,7 +170,7 @@ contract TakeProfit is ITakeProfit, Ownable {
             payOff(tokenId, tokenOwner);
         }
 
-        emit TakeProfitExecuted(tokenId);
+        emit TakeProfitExecuted(tokenId, tokenOwner);
     }
 
     // PRIVATE FUNCTIONS // 

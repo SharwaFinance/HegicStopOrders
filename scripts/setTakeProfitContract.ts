@@ -4,6 +4,7 @@ import {solidity} from "ethereum-waffle"
 import chai from "chai"
 import { TakeProfit } from "../typechain-types"
 import { IPositionManager } from "../typechain-types/contracts/IPositionManager"
+import { UpkeepTakeProfit } from "../typechain-types/contracts/UpkeepTakeProfit.sol"
 
 const hre = require("hardhat");
 
@@ -17,11 +18,10 @@ async function main() {
       deployer
     ] = await hre.ethers.getSigners()
 
-    const positionManager = (await hre.ethers.getContract("PositionsManager")) as IPositionManager
+    const upkeepTakeProfit = (await hre.ethers.getContract("UpkeepTakeProfit")) as UpkeepTakeProfit
     const takeProfit = (await hre.ethers.getContract("TakeProfit")) as TakeProfit
 
-    await positionManager.approve(await takeProfit.getAddress(), 7216)
-    await positionManager.approve(await takeProfit.getAddress(), 7230)
+    await upkeepTakeProfit.setTakePprofit(await takeProfit.getAddress())
  }
 
 main()

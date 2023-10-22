@@ -7,14 +7,20 @@ async function deployment(hre: HardhatRuntimeEnvironment): Promise<void> {
 
   const TakeProfit = await get("TakeProfit")
   const PositionsManager = await get("PositionsManager")
+  const LINK = await get("LINK")
+  const IClonableBeaconProxy = await get("IClonableBeaconProxy")
 
-  await deploy("UpkeepTakeProfit", {
+  // await deploy("UpkeepTakeProfit", {
+  //     from: deployer,
+  //     log: true,
+  //     args: [TakeProfit.address, PositionsManager.address],
+  // })
+    
+  await deploy("UpkeepBalances", {
       from: deployer,
       log: true,
-      args: [TakeProfit.address, PositionsManager.address],
+      args: [LINK.address, IClonableBeaconProxy.address],
   })
-    
-  // TODO: change UpkeepBalances
 }
 
 deployment.tags = ["upkeep"]

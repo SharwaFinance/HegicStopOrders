@@ -22,7 +22,7 @@ contract UpkeepTakeProfit is
 
     // OWNER FUNCTIONS //
 
-    function setTakePprofit(ITakeProfit newTakeProfit) external onlyOwner {
+    function setTakeProfit(ITakeProfit newTakeProfit) external onlyOwner {
         takeProfit = newTakeProfit;
     }
 
