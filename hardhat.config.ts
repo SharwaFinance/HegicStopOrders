@@ -10,7 +10,7 @@ const config: HardhatUserConfig = {
   solidity: "0.8.0",
   namedAccounts: {
     deployer: {
-        default: 0,
+      default: 0,
     },
 },
 };

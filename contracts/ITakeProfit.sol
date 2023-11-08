@@ -74,6 +74,17 @@ interface ITakeProfit {
     function getExpirationTime(uint256 tokenId) external view returns (uint256);
 
     /**
+     * @dev Checks whether a specific option with the given tokenId is currently active.
+     * 
+     * An active option means that it is in the 'Locked' state within the operational treasury.
+     * 
+     * @param tokenId The unique identifier of the option token being checked.
+     * 
+     * @return A boolean value indicating whether the option is currently active (true) or not (false).
+     */
+    function isOptionActive(uint256 tokenId) external view returns (bool);
+
+    /**
      * @dev Checks if the take profit conditions for a specific token have been triggered.
      * 
      * @param tokenId The unique identifier of the token for which take profit is being checked.

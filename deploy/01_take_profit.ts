@@ -8,11 +8,11 @@ async function deployment(hre: HardhatRuntimeEnvironment): Promise<void> {
   const OperationalTreasury = await get("OperationalTreasury")
   const PositionsManager = await get("PositionsManager")
 
-  // await deploy("TakeProfit", {
-  //   from: deployer,
-  //   log: true,
-  //   args: [PositionsManager.address, OperationalTreasury.address],
-  // })
+  await deploy("TakeProfit", {
+    from: deployer,
+    log: true,
+    args: [PositionsManager.address, OperationalTreasury.address],
+  })
 
 }
 

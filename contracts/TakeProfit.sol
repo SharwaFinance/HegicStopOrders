@@ -85,6 +85,14 @@ contract TakeProfit is ITakeProfit, Ownable {
         (, , , , uint32 expiration) = operationalTreasury.lockedLiquidity(tokenId);
         return uint256(expiration);
     }
+
+    /**
+     * @dev See {ITakeProfit-isOptionActive}.
+     */
+    function isOptionActive(uint256 tokenId) public view override returns (bool) {
+        (IOperationalTreasury.LockedLiquidityState state, , , , ) = operationalTreasury.lockedLiquidity(tokenId);
+        return state == IOperationalTreasury.LockedLiquidityState.Locked;
+    }
     
     /**
      * @dev See {ITakeProfit-checkTakeProfit}.
@@ -92,7 +100,7 @@ contract TakeProfit is ITakeProfit, Ownable {
     function checkTakeProfit(uint256 tokenId) public view override returns (bool takeProfitTriggered) {
         TakeInfo memory takenInfo = tokenIdToTakeInfo[tokenId];
 
-        if (positionManager.isApprovedOrOwner(address(this), tokenId) == false || (getPayOffAmount(tokenId) > 0) == false) {
+        if (positionManager.isApprovedOrOwner(address(this), tokenId) == false || (getPayOffAmount(tokenId) > 0) == false || isOptionActive(tokenId) == false) {
             return false;
         }
 
@@ -166,26 +174,10 @@ contract TakeProfit is ITakeProfit, Ownable {
 
         positionManager.transferFrom(tokenOwner, address(this), tokenId);
 
-        if (block.timestamp < getExpirationTime(tokenId)) {
-            payOff(tokenId, tokenOwner);
-        }
-
-        emit TakeProfitExecuted(tokenId, tokenOwner);
-    }
-
-    // PRIVATE FUNCTIONS // 
-
-    /**
-     * @dev Pays off the profit to the owner of a token based on the provided TakeInfo.
-     * 
-     * This private function is used to pay off the profit to the owner of a token when the take profit
-     * conditions have been met and the token has not yet expired. It interacts with the operational treasury
-     * to calculate and transfer the profit.
-     * 
-     */
-    function payOff(uint256 tokenId, address tokenOwner) private {
         operationalTreasury.payOff(tokenId, tokenOwner);
 
         positionManager.transferFrom(address(this), tokenOwner, tokenId);
+
+        emit TakeProfitExecuted(tokenId, tokenOwner);
     }
 }

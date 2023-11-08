@@ -20,15 +20,19 @@ async function main() {
     const positionManager = (await hre.ethers.getContract("PositionsManager")) as IPositionManager
     const takeProfit = (await hre.ethers.getContract("TakeProfit")) as TakeProfit
 
-    console.log(await takeProfit.checkTakeProfit(7216))
+    await takeProfit.setGlobalTimeToExecution(60*30)
 
-    console.log(await takeProfit.tokenIdToTakeInfo(7216))
+    console.log(await takeProfit.checkTakeProfit(7453))
 
-    console.log(await takeProfit.getCurrentPrice(7216))
+    // console.log(await takeProfit.tokenIdToTakeInfo(7402))
 
-    console.log(await takeProfit.getPayOffAmount(7216))
+//     console.log(await takeProfit.getCurrentPrice(7420))
 
-    console.log(await positionManager.isApprovedOrOwner(await takeProfit.getAddress(), 7216))
+//     console.log(await takeProfit.getPayOffAmount(7420))
+
+//     console.log(await takeProfit.getExpirationTime(7420))
+
+//     console.log(await positionManager.isApprovedOrOwner(await takeProfit.getAddress(), 7420))
  }
 
 main()
