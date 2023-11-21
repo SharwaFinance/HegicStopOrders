@@ -46,9 +46,11 @@ contract MockOperationalTreasury is IOperationalTreasury {
 
     function setLockedLiquidity(
         uint256 id,
-        uint256 period
+        uint256 period,
+        LockedLiquidityState state
     ) external {
         LockedLiquidity storage lockedLiquidity = lockedLiquidityData[id];
         lockedLiquidity.expiration = uint32(block.timestamp + period);
+        lockedLiquidity.state = state;
     }
 }

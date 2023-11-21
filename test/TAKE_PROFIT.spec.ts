@@ -34,7 +34,7 @@ describe("TAKE_PROFIT.spec.ts", function () {
     await positionsManager.mint(signers[0])
     await positionsManager.setApprovalForAll(await takeProfit.getAddress(), true)
 
-    await operationalTreasury.setLockedLiquidity(tokenId, 60*60*24*7)
+    await operationalTreasury.setLockedLiquidity(tokenId, 60*60*24*7, 1)
 
   });
 
@@ -69,7 +69,7 @@ describe("TAKE_PROFIT.spec.ts", function () {
     const newLowerStopPrice = 1500e8;
 
     await takeProfit.connect(signers[0]).setTakeProfit(tokenId, { upperStopPrice: upperStopPrice, lowerStopPrice: lowerStopPrice });
-    await takeProfit.connect(signers[0]).updateTakeProfit(tokenId, { upperStopPrice: newUpperStopPrice, lowerStopPrice: newLowerStopPrice });
+    await takeProfit.connect(signers[0]).setTakeProfit(tokenId, { upperStopPrice: newUpperStopPrice, lowerStopPrice: newLowerStopPrice });
 
     const takeProfitInfo = await takeProfit.tokenIdToTakeInfo(tokenId);
     expect(takeProfitInfo.upperStopPrice).to.equal(newUpperStopPrice);
@@ -81,6 +81,7 @@ describe("TAKE_PROFIT.spec.ts", function () {
 
     await priceProviderUSDC.setAnswer(1000e8)
     await hegicStrategy.setPayOffAmount(tokenId, 1)
+
     await takeProfit.executeTakeProfit(tokenId);
 
     const takeProfitInfo = await takeProfit.tokenIdToTakeInfo(tokenId);
@@ -95,7 +96,7 @@ describe("TAKE_PROFIT.spec.ts", function () {
     expect(takeProfitTriggered).to.equal(false);
 
     await priceProviderUSDC.setAnswer(1000e8)
-    await hegicStrategy.setPayOffAmount(tokenId, 1)
+    await hegicStrategy.setPayOffAmount(tokenId, 100)
 
     takeProfitTriggered = await takeProfit.checkTakeProfit(tokenId);
     expect(takeProfitTriggered).to.equal(true);
@@ -130,7 +131,7 @@ describe("TAKE_PROFIT.spec.ts", function () {
   it("should revert when updating take profit parameters if not the owner", async () => {
     await takeProfit.connect(signers[0]).setTakeProfit(tokenId, { upperStopPrice, lowerStopPrice });
 
-    await expect(takeProfit.connect(signers[1]).updateTakeProfit(tokenId, { upperStopPrice: 2500e8, lowerStopPrice: 1500e8 })).to.be.revertedWith("Caller must be the owner of the token");
+    await expect(takeProfit.connect(signers[1]).setTakeProfit(tokenId, { upperStopPrice: 2500e8, lowerStopPrice: 1500e8 })).to.be.revertedWith("Caller must be the owner of the token");
   });
 
 });

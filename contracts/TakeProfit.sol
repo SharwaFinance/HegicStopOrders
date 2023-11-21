@@ -25,8 +25,6 @@ import {ITakeProfit} from "./ITakeProfit.sol";
 import {IPositionsManager} from "./IPositionsManager.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
-import "hardhat/console.sol";
-
 /**
  * @title TakeProfit
  * @author 0nika0
