@@ -98,7 +98,7 @@ contract TakeProfit is ITakeProfit, Ownable {
     function checkTakeProfit(uint256 tokenId) public view override returns (bool takeProfitTriggered) {
         TakeInfo memory takenInfo = tokenIdToTakeInfo[tokenId];
 
-        if (positionManager.isApprovedOrOwner(address(this), tokenId) == false || (getPayOffAmount(tokenId) > 0) == false || isOptionActive(tokenId) == false) {
+        if (positionManager.isApprovedOrOwner(address(this), tokenId) && getPayOffAmount(tokenId) > 0 && isOptionActive(tokenId)) {
             return false;
         }
 
