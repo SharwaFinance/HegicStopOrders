@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  **/
 
-pragma solidity 0.8.0;
+pragma solidity ^0.8.0;
 
 import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import {IOperationalTreasury, IHegicStrategy} from "./IOperationalTreasury.sol";
@@ -108,16 +108,8 @@ contract TakeProfit is ITakeProfit, Ownable {
 
         uint256 currentPrice = getCurrentPrice(tokenId);
 
-        if (takenInfo.upperStopPrice != 0) {
-            if (currentPrice >= takenInfo.upperStopPrice) {
-                return true;
-            }
-        }  
-        if (takenInfo.lowerStopPrice != 0) {
-            if (currentPrice <= takenInfo.lowerStopPrice) {
-                return true;
-            }
-        }
+        return takenInfo.upperStopPrice != 0 && currentPrice >= takenInfo.upperStopPrice ||
+                    takenInfo.lowerStopPrice != 0 && currentPrice <= takenInfo.lowerStopPrice;
     }
 
     // EXTERANAL FUNCTIONS // 
@@ -127,8 +119,6 @@ contract TakeProfit is ITakeProfit, Ownable {
      */
     function setTakeProfit(uint256 tokenId, TakeInfo calldata takeProfitParams) external override {
         require(positionManager.ownerOf(tokenId) == msg.sender, "Caller must be the owner of the token");
-
-        require(positionManager.isApprovedOrOwner(address(this), tokenId), "This tokenId is not approved for this address");
 
         require(block.timestamp < getExpirationTime(tokenId), "Option expiration date has passed");
 
@@ -170,11 +160,7 @@ contract TakeProfit is ITakeProfit, Ownable {
 
         address tokenOwner = positionManager.ownerOf(tokenId); 
 
-        positionManager.transferFrom(tokenOwner, address(this), tokenId);
-
         operationalTreasury.payOff(tokenId, tokenOwner);
-
-        positionManager.transferFrom(address(this), tokenOwner, tokenId);
 
         emit TakeProfitExecuted(tokenId, tokenOwner);
     }
