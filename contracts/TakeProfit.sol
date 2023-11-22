@@ -49,26 +49,17 @@ contract TakeProfit is ITakeProfit, Ownable {
 
     // OWNER FUNCTIONS //
 
-    /**
-     * @dev See {ITakeProfit-setGlobalTimeToExecution}.
-     */
     function setGlobalTimeToExecution(uint256 newGlobalTimeToExecution) external override onlyOwner {
         globalTimeToExecution = newGlobalTimeToExecution;
     }
 
     // VIEW FUNCTIONS // 
 
-    /**
-     * @dev See {ITakeProfit-getPayOffAmount}.
-     */
     function getPayOffAmount(uint256 tokenId) public view override returns (uint256) {
         (, IHegicStrategy strategy, , , ) = operationalTreasury.lockedLiquidity(tokenId);
         return strategy.payOffAmount(tokenId);
     } 
 
-    /**
-     * @dev See {ITakeProfit-getCurrentPrice}.
-     */
     function getCurrentPrice(uint256 tokenId) public view override returns (uint256) {
         (, IHegicStrategy strategy, , , ) = operationalTreasury.lockedLiquidity(tokenId);
         (, int256 latestPrice, , , ) = AggregatorV3Interface(strategy.priceProvider()).latestRoundData();
@@ -76,25 +67,16 @@ contract TakeProfit is ITakeProfit, Ownable {
         return uint256(latestPrice);
     }
 
-    /**
-     * @dev See {ITakeProfit-getExpirationTime}.
-     */
     function getExpirationTime(uint256 tokenId) public view override returns (uint256) {
         (, , , , uint32 expiration) = operationalTreasury.lockedLiquidity(tokenId);
         return uint256(expiration);
     }
 
-    /**
-     * @dev See {ITakeProfit-isOptionActive}.
-     */
     function isOptionActive(uint256 tokenId) public view override returns (bool) {
         (IOperationalTreasury.LockedLiquidityState state, , , , ) = operationalTreasury.lockedLiquidity(tokenId);
         return state == IOperationalTreasury.LockedLiquidityState.Locked;
     }
     
-    /**
-     * @dev See {ITakeProfit-checkTakeProfit}.
-     */
     function checkTakeProfit(uint256 tokenId) public view override returns (bool takeProfitTriggered) {
         TakeInfo memory takenInfo = tokenIdToTakeInfo[tokenId];
 
@@ -114,9 +96,6 @@ contract TakeProfit is ITakeProfit, Ownable {
 
     // EXTERANAL FUNCTIONS // 
 
-    /**
-     * @dev See {ITakeProfit-setTakeProfit}.
-     */
     function setTakeProfit(uint256 tokenId, TakeInfo calldata takeProfitParams) external override {
         require(positionManager.ownerOf(tokenId) == msg.sender, "Caller must be the owner of the token");
 
@@ -135,9 +114,6 @@ contract TakeProfit is ITakeProfit, Ownable {
         );
     }
 
-    /**
-     * @dev See {ITakeProfit-deleteTakeProfit}.
-     */
     function deleteTakeProfit(uint256 tokenId) external override {
         TakeInfo memory takenInfo = tokenIdToTakeInfo[tokenId];
         
@@ -150,9 +126,6 @@ contract TakeProfit is ITakeProfit, Ownable {
         emit TakeProfitDeleted(tokenId);
     }
 
-    /**
-     * @dev See {ITakeProfit-executeTakeProfit}.
-     */
     function executeTakeProfit(uint256 tokenId) external override {
         require(checkTakeProfit(tokenId), "Take profit conditions not met");
 
