@@ -103,7 +103,6 @@ interface ITakeProfit {
      * 
      * Requirements:
      * - The caller must be the owner of the token.
-     * - The contract must be approved to manage the specified token.
      * - The token's expiration date must not have passed.
      */
     function setTakeProfit(
