@@ -38,6 +38,7 @@
     "@keep-network/hardhat-local-networks-config": "^0.1.0-pre.4",
     "@nomicfoundation/hardhat-ethers": "^3.0.2",
     "@openzeppelin/contracts": "^4.8.3",
+    "@primitivefi/hardhat-dodoc": "^0.2.3",
     "@uniswap/v3-periphery": "^1.4.3",
     "dotenv": "^16.0.3",
     "ethereum-waffle": "^2.2.0",

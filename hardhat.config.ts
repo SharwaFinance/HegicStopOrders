@@ -4,6 +4,7 @@ import 'hardhat-deploy';
 import 'hardhat-deploy-ethers';
 import '@nomicfoundation/hardhat-ethers';
 import "@keep-network/hardhat-local-networks-config";
+import '@primitivefi/hardhat-dodoc';
 
 const config: HardhatUserConfig = {
   localNetworksConfitg: "~/.hardhat/config.json",
