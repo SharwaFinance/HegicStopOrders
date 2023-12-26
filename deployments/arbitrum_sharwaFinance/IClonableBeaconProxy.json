@@ -1,0 +1,77 @@
+{
+  "address": "0x37D9dC70bfcd8BC77Ec2858836B923c560E891D1",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "id",
+          "type": "uint256"
+        }
+      ],
+      "name": "getUpkeep",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "address",
+              "name": "target",
+              "type": "address"
+            },
+            {
+              "internalType": "uint32",
+              "name": "executeGas",
+              "type": "uint32"
+            },
+            {
+              "internalType": "bytes",
+              "name": "checkData",
+              "type": "bytes"
+            },
+            {
+              "internalType": "uint96",
+              "name": "balance",
+              "type": "uint96"
+            },
+            {
+              "internalType": "address",
+              "name": "admin",
+              "type": "address"
+            },
+            {
+              "internalType": "uint64",
+              "name": "maxValidBlocknumber",
+              "type": "uint64"
+            },
+            {
+              "internalType": "uint32",
+              "name": "lastPerformBlockNumber",
+              "type": "uint32"
+            },
+            {
+              "internalType": "uint96",
+              "name": "amountSpent",
+              "type": "uint96"
+            },
+            {
+              "internalType": "bool",
+              "name": "paused",
+              "type": "bool"
+            },
+            {
+              "internalType": "bytes",
+              "name": "offchainConfig",
+              "type": "bytes"
+            }
+          ],
+          "internalType": "struct IClonableBeaconProxy.UpkeepInfo",
+          "name": "upkeepInfo",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "numDeployments": 1
+}
