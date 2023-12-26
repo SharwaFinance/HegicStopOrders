@@ -7,7 +7,7 @@ import "@keep-network/hardhat-local-networks-config";
 import '@primitivefi/hardhat-dodoc';
 
 const config: HardhatUserConfig = {
-  localNetworksConfitg: "~/.hardhat/config.json",
+  localNetworksConfig: "~/.hardhat/config.json",
   solidity: "0.8.0",
   namedAccounts: {
     deployer: {

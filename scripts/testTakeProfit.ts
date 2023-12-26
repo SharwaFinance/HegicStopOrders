@@ -3,7 +3,7 @@ import {Signer} from "ethers"
 import {solidity} from "ethereum-waffle"
 import chai from "chai"
 import { TakeProfit } from "../typechain-types"
-import { IPositionManager } from "../typechain-types/contracts/IPositionManager"
+import { IPositionsManager } from "../typechain-types"
 
 const hre = require("hardhat");
 
@@ -17,7 +17,7 @@ async function main() {
       deployer
     ] = await hre.ethers.getSigners()
 
-    const positionManager = (await hre.ethers.getContract("PositionsManager")) as IPositionManager
+    const positionManager = (await hre.ethers.getContract("PositionsManager")) as IPositionsManager
     const takeProfit = (await hre.ethers.getContract("TakeProfit")) as TakeProfit
 
     await takeProfit.setGlobalTimeToExecution(60*30)
@@ -26,13 +26,13 @@ async function main() {
 
     // console.log(await takeProfit.tokenIdToTakeInfo(7402))
 
-//     console.log(await takeProfit.getCurrentPrice(7420))
+    // console.log(await takeProfit.getCurrentPrice(7420))
 
-//     console.log(await takeProfit.getPayOffAmount(7420))
+    // console.log(await takeProfit.getPayOffAmount(7420))
 
-//     console.log(await takeProfit.getExpirationTime(7420))
+    // console.log(await takeProfit.getExpirationTime(7420))
 
-//     console.log(await positionManager.isApprovedOrOwner(await takeProfit.getAddress(), 7420))
+    // console.log(await positionManager.isApprovedOrOwner(await takeProfit.getAddress(), 7420))
  }
 
 main()

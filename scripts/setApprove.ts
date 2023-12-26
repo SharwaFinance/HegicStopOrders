@@ -3,7 +3,6 @@ import {Signer} from "ethers"
 import {solidity} from "ethereum-waffle"
 import chai from "chai"
 import { TakeProfit } from "../typechain-types"
-import { IPositionManager } from "../typechain-types/contracts/IPositionManager"
 import { IERC721 } from "../typechain-types"
 
 const hre = require("hardhat");

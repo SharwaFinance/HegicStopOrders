@@ -39,7 +39,7 @@ async function deployment(hre: HardhatRuntimeEnvironment): Promise<void> {
       args: [MockHegicStrategy.address]
     }) 
 
-  } else if (network.name == "arbitrum_ddl_test") {
+  } else {
     save("USDCe", {
       address: "0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8",
       abi: await getArtifact("@openzeppelin/contracts/token/ERC20/ERC20.sol:ERC20").then((x) => x.abi),
