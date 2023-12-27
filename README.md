@@ -23,6 +23,8 @@ Another functionality involves time-based triggers. You can set up a time trigge
 
 If you have questions about how to use the SDK, please reach out in the `#dev-chat` channel in our Discord.
 
+## Initialization
+
 ```shell
 yarn build
 
